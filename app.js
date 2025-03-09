@@ -84,7 +84,6 @@ function displayNews(articles) {
         return;
     }
 
-    // Filter out articles without valid images
     const validArticles = articles.filter(article => 
         article.urlToImage && 
         article.urlToImage !== 'null' && 
@@ -99,14 +98,23 @@ function displayNews(articles) {
     }
 
     const newsHTML = validArticles.map(article => {
-        const articleData = JSON.stringify(article).replace(/"/g, '&quot;');
-        const isFavorite = isInFavorites(article);
+        const cleanArticle = {
+            title: article.title || '',
+            description: article.description || 'No description available',
+            urlToImage: article.urlToImage || '',
+            url: article.url || '#',
+            source: article.source || { name: 'Unknown' },
+            publishedAt: article.publishedAt || new Date().toISOString()
+        };
+        
+        const articleData = JSON.stringify(cleanArticle).replace(/"/g, '&quot;');
+        const isFavorite = isInFavorites(cleanArticle);
         
         return `
             <div class="news-card">
                 <img 
-                    src="${article.urlToImage}" 
-                    alt="${article.title}"
+                    src="${cleanArticle.urlToImage}" 
+                    alt="${cleanArticle.title}"
                     class="news-image"
                     onerror="this.parentElement.remove()"
                 >
@@ -117,13 +125,13 @@ function displayNews(articles) {
                     <i class="fas fa-heart"></i>
                 </button>
                 <div class="news-content">
-                    <h3 class="news-title">${article.title}</h3>
-                    <p class="news-description">${article.description || 'No description available'}</p>
+                    <h3 class="news-title">${cleanArticle.title}</h3>
+                    <p class="news-description">${cleanArticle.description}</p>
                     <div class="news-meta">
-                        <span>${article.source.name}</span>
-                        <span>${new Date(article.publishedAt).toLocaleDateString()}</span>
+                        <span>${cleanArticle.source.name}</span>
+                        <span>${new Date(cleanArticle.publishedAt).toLocaleDateString()}</span>
                     </div>
-                    <a href="${article.url}" target="_blank" class="read-more">Read More</a>
+                    <a href="${cleanArticle.url}" target="_blank" class="read-more">Read More</a>
                 </div>
             </div>
         `;
@@ -131,10 +139,10 @@ function displayNews(articles) {
 
     newsContainer.innerHTML = newsHTML;
     
-    // Add click event listeners to all favorite buttons
     document.querySelectorAll('.favorite-btn').forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             handleFavoriteClick(this);
         });
     });
@@ -146,7 +154,6 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchNews('general');
     updateFavoritesCount();
     
-    // Add event listener for favorites navigation
     document.querySelectorAll('.nav-links a').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
@@ -162,16 +169,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Add these functions to handle mobile menu
     setupMobileMenu();
 });
 
-// Search button click
 if (searchBtn) {
     searchBtn.addEventListener('click', searchNews);
 }
 
-// Enter key press in search input
 if (searchInput) {
     searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -180,7 +184,6 @@ if (searchInput) {
     });
 }
 
-// Function to get favorites from localStorage
 function getFavorites() {
     try {
         const favorites = localStorage.getItem('favorites');
@@ -191,7 +194,6 @@ function getFavorites() {
     }
 }
 
-// Function to save favorites to localStorage
 function saveFavorites(favorites) {
     try {
         localStorage.setItem('favorites', JSON.stringify(favorites));
@@ -201,40 +203,33 @@ function saveFavorites(favorites) {
     }
 }
 
-// Function to check if an article is already in favorites
 function isInFavorites(article) {
     try {
         const favorites = getFavorites();
         return favorites.some(fav => fav.title === article.title);
-    } catch (error) {
-        console.error('Error checking favorites:', error);
+    } catch {
         return false;
     }
 }
 
-// Update the handleFavoriteClick function
 function handleFavoriteClick(button) {
     try {
-        // Get article data and clean it up
         let articleData = button.getAttribute('data-article');
-        articleData = articleData.replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+        articleData = articleData.replace(/&quot;/g, '"');
         const article = JSON.parse(articleData);
         
         const favorites = getFavorites();
         const index = favorites.findIndex(fav => fav.title === article.title);
         
         if (index === -1) {
-            // Add to favorites
             favorites.push(article);
             button.classList.add('active');
             showToast('Added to favorites! ❤️');
         } else {
-            // Remove from favorites
             favorites.splice(index, 1);
             button.classList.remove('active');
             showToast('Removed from favorites');
             
-            // If we're on the favorites page, refresh the display
             const currentCategory = document.querySelector('.nav-links a.active')?.getAttribute('data-category');
             if (currentCategory === 'favorites') {
                 displayFavorites();
@@ -245,13 +240,10 @@ function handleFavoriteClick(button) {
         saveFavorites(favorites);
         updateFavoritesCount();
     } catch (error) {
-        console.error('Error handling favorite click:', error);
-        console.log('Problematic data:', button.getAttribute('data-article'));
-        showToast('Error updating favorites');
+        console.error('Error handling favorite:', error);
     }
 }
 
-// update favorites count
 function updateFavoritesCount() {
     const favorites = getFavorites();
     const favCount = document.querySelector('.favorites-count');
@@ -262,7 +254,6 @@ function updateFavoritesCount() {
     }
 }
 
-// Update the displayFavorites function
 function displayFavorites() {
     const favorites = getFavorites();
     if (favorites.length === 0) {
@@ -276,7 +267,6 @@ function displayFavorites() {
     updateFavoritesCount();
 }
 
-// Function to show toast notifications
 function showToast(message) {
     const toast = document.createElement('div');
     toast.className = 'toast';
@@ -294,7 +284,6 @@ function showToast(message) {
     }, 100);
 }
 
-// Toggle menu function
 function toggleMenu() {
     const navLinks = document.querySelector('.nav-links');
     const menuIcon = document.querySelector('.menu-icon');
@@ -303,7 +292,6 @@ function toggleMenu() {
     menuIcon.classList.toggle('active');
 }
 
-// Close menu when clicking outside
 document.addEventListener('click', (e) => {
     const navLinks = document.querySelector('.nav-links');
     const menuIcon = document.querySelector('.menu-icon');
@@ -314,7 +302,6 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Close menu when window is resized to desktop size
 window.addEventListener('resize', () => {
     if (window.innerWidth > 768) {
         const navLinks = document.querySelector('.nav-links');
@@ -325,7 +312,6 @@ window.addEventListener('resize', () => {
     }
 });
 
-// Add this to your existing JavaScript
 document.querySelector('.search-bar input').addEventListener('focus', function() {
     if (window.innerWidth <= 767) {
         this.closest('.search-bar').classList.add('keyboard-active');
@@ -338,14 +324,13 @@ document.querySelector('.search-bar input').addEventListener('blur', function() 
     }
 });
 
-// Add these functions to handle mobile menu
 function setupMobileMenu() {
     const menuToggle = document.querySelector('.menu-toggle');
     const navLinks = document.querySelector('.nav-links');
     
     if (!menuToggle) return;
 
-    // Toggle menu
+        
     menuToggle.addEventListener('click', (e) => {
         e.stopPropagation();
         navLinks.classList.toggle('active');
@@ -354,7 +339,6 @@ function setupMobileMenu() {
             '<i class="fas fa-bars"></i>';
     });
 
-    // Close menu when clicking outside
     document.addEventListener('click', (e) => {
         if (!navLinks.contains(e.target) && !menuToggle.contains(e.target)) {
             navLinks.classList.remove('active');
@@ -362,7 +346,7 @@ function setupMobileMenu() {
         }
     });
 
-    // Close menu when clicking a link
+    
     navLinks.querySelectorAll('a').forEach(link => {
         link.addEventListener('click', () => {
             navLinks.classList.remove('active');

@@ -45,6 +45,7 @@ flex{
     width: 100%;
     overflow: hidden;
 }
+/* Navbar */
 nav{
     background-color: #f8f8f8;
     position: fixed;
