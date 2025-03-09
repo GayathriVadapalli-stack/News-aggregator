@@ -1,37 +1,69 @@
-const apiKey = "d2e837634e374027bbdac4f0cc94cc30";
 const newsContainer = document.querySelector('.news-container');
-const searchBtn = document.getElementById('searchBtn');
 const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
 
-async function fetchNews(category) {
-    const url = `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=${apiKey}`;
+// Make sure we're using the correct API key from config.js
+import { apiKey } from './config.js';
 
+async function loadConfig() {
+    const response = await fetch("config.json");
+    const config = await response.json();
+    return config;
+  }
+  
+  async function fetchNews(category = 'general') {
     try {
+        newsContainer.innerHTML = '<div class="loading">Loading news...</div>';
+        
+        // Log the URL and API key (remove in production)
+        console.log('Fetching news for category:', category);
+        
+        const url = `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=${apiKey}`;
         const response = await fetch(url);
+        
+        // Log response status
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
-
-        if (data.articles) {
+        console.log('API Response:', data); // Debug log
+        
+        if (data.status === 'ok' && data.articles) {
             displayNews(data.articles);
+        } else {
+            throw new Error(data.message || 'Failed to fetch news');
         }
     } catch (error) {
-        console.error("Error fetching news:", error);
+        console.error('Error details:', error);
+        newsContainer.innerHTML = `
+            <div class="error">
+                <p>Failed to load news. Please try again later.</p>
+                <button onclick="fetchNews('${category}')">Try Again</button>
+            </div>`;
     }
 }
-
-// Call fetchNews when page loads
-fetchNews('general');
+  
+  fetchNews();  
 
 async function searchNews() {
     const searchTerm = searchInput.value.trim();
     if (!searchTerm) return;
 
-    newsContainer.innerHTML = '<div class="loading">Searching news...</div>';
-
     try {
-        const url = `https://newsapi.org/v2/everything?q=${searchTerm}&apiKey=${apiKey}&pageSize=20&language=en`;
+        newsContainer.innerHTML = '<div class="loading">Searching news...</div>';
+        
+        const url = `https://newsapi.org/v2/everything?q=${searchTerm}&apiKey=${apiKey}&pageSize=20`;
         const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
-
+        
         if (data.status === 'ok' && data.articles) {
             displayNews(data.articles);
         } else {
@@ -41,7 +73,7 @@ async function searchNews() {
         console.error('Error:', error);
         newsContainer.innerHTML = `
             <div class="error">
-                <p>No results found for "${searchTerm}". Try different keywords.</p>
+                <p>No results found. Try different keywords.</p>
             </div>`;
     }
 }
@@ -52,109 +84,199 @@ function displayNews(articles) {
         return;
     }
 
-    const newsHTML = articles.map(article => `
-        <div class="news-card">
-            <img 
-                src="${article.urlToImage || 'https://via.placeholder.com/400x200?text=No+Image'}" 
-                alt="${article.title}"
-                class="news-image"
-                onerror="this.src='https://via.placeholder.com/400x200?text=No+Image'"
-            >
-            <button class="favorite-btn ${isFavorite(article) ? 'active' : ''}" 
-                    onclick="toggleFavorite(${JSON.stringify(article).replace(/"/g, '&quot;')})">
-                <i class="fas fa-heart"></i>
-            </button>
-            <div class="news-content">
-                <h3 class="news-title">${article.title}</h3>
-                <p class="news-description">${article.description || 'No description available'}</p>
-                <div class="news-meta">
-                    <span>${article.source.name}</span>
-                    <span>${new Date(article.publishedAt).toLocaleDateString()}</span>
+    // Filter out articles without valid images
+    const validArticles = articles.filter(article => 
+        article.urlToImage && 
+        article.urlToImage !== 'null' && 
+        article.urlToImage !== 'undefined' && 
+        !article.urlToImage.includes('placeholder') &&
+        article.urlToImage.startsWith('http')
+    );
+
+    if (validArticles.length === 0) {
+        newsContainer.innerHTML = '<div class="error">No articles with images found.</div>';
+        return;
+    }
+
+    const newsHTML = validArticles.map(article => {
+        const articleData = JSON.stringify(article).replace(/"/g, '&quot;');
+        const isFavorite = isInFavorites(article);
+        
+        return `
+            <div class="news-card">
+                <img 
+                    src="${article.urlToImage}" 
+                    alt="${article.title}"
+                    class="news-image"
+                    onerror="this.parentElement.remove()"
+                >
+                <button 
+                    class="favorite-btn ${isFavorite ? 'active' : ''}"
+                    data-article='${articleData}'
+                >
+                    <i class="fas fa-heart"></i>
+                </button>
+                <div class="news-content">
+                    <h3 class="news-title">${article.title}</h3>
+                    <p class="news-description">${article.description || 'No description available'}</p>
+                    <div class="news-meta">
+                        <span>${article.source.name}</span>
+                        <span>${new Date(article.publishedAt).toLocaleDateString()}</span>
+                    </div>
+                    <a href="${article.url}" target="_blank" class="read-more">Read More</a>
                 </div>
-                <a href="${article.url}" target="_blank" class="read-more">Read More</a>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 
     newsContainer.innerHTML = newsHTML;
+    
+    // Add click event listeners to all favorite buttons
+    document.querySelectorAll('.favorite-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            handleFavoriteClick(this);
+        });
+    });
 }
 
 // Event Listeners
-document.addEventListener('DOMContentLoaded', function() {
-    // Initial news load
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Page loaded, fetching news...'); // Debug log
     fetchNews('general');
-
-    // Search button click
-    if (searchBtn) {
-        searchBtn.addEventListener('click', () => {
-            searchNews();
-        });
-    }
-
-    // Enter key in search input
-    if (searchInput) {
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                searchNews();
-            }
-        });
-    }
-
-    // Category navigation (keep your existing category click handlers)
+    updateFavoritesCount();
+    
+    // Add event listener for favorites navigation
     document.querySelectorAll('.nav-links a').forEach(link => {
-        link.addEventListener('click', function(e) {
+        link.addEventListener('click', (e) => {
             e.preventDefault();
-            const category = this.getAttribute('data-category');
-            if (category) {
+            document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+            link.classList.add('active');
+
+            const category = link.getAttribute('data-category');
+            if (category === 'favorites') {
+                displayFavorites();
+            } else {
                 fetchNews(category);
             }
         });
     });
+
+    // Add these functions to handle mobile menu
+    setupMobileMenu();
 });
 
-// Get favorites from localStorage
+// Search button click
+if (searchBtn) {
+    searchBtn.addEventListener('click', searchNews);
+}
+
+// Enter key press in search input
+if (searchInput) {
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            searchNews();
+        }
+    });
+}
+
+// Function to get favorites from localStorage
 function getFavorites() {
-    return JSON.parse(localStorage.getItem('favorites') || '[]');
+    try {
+        const favorites = localStorage.getItem('favorites');
+        return favorites ? JSON.parse(favorites) : [];
+    } catch (error) {
+        console.error('Error getting favorites:', error);
+        return [];
+    }
 }
 
-// Check if an article is in favorites
-function isFavorite(article) {
-    const favorites = getFavorites();
-    return favorites.some(fav => fav.title === article.title);
+// Function to save favorites to localStorage
+function saveFavorites(favorites) {
+    try {
+        localStorage.setItem('favorites', JSON.stringify(favorites));
+    } catch (error) {
+        console.error('Error saving favorites:', error);
+        showToast('Error saving favorites');
+    }
 }
 
-// Toggle favorite status
-function toggleFavorite(article) {
+// Function to check if an article is already in favorites
+function isInFavorites(article) {
+    try {
+        const favorites = getFavorites();
+        return favorites.some(fav => fav.title === article.title);
+    } catch (error) {
+        console.error('Error checking favorites:', error);
+        return false;
+    }
+}
+
+// Update the handleFavoriteClick function
+function handleFavoriteClick(button) {
+    try {
+        // Get article data and clean it up
+        let articleData = button.getAttribute('data-article');
+        articleData = articleData.replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+        const article = JSON.parse(articleData);
+        
+        const favorites = getFavorites();
+        const index = favorites.findIndex(fav => fav.title === article.title);
+        
+        if (index === -1) {
+            // Add to favorites
+            favorites.push(article);
+            button.classList.add('active');
+            showToast('Added to favorites! ❤️');
+        } else {
+            // Remove from favorites
+            favorites.splice(index, 1);
+            button.classList.remove('active');
+            showToast('Removed from favorites');
+            
+            // If we're on the favorites page, refresh the display
+            const currentCategory = document.querySelector('.nav-links a.active')?.getAttribute('data-category');
+            if (currentCategory === 'favorites') {
+                displayFavorites();
+                return;
+            }
+        }
+        
+        saveFavorites(favorites);
+        updateFavoritesCount();
+    } catch (error) {
+        console.error('Error handling favorite click:', error);
+        console.log('Problematic data:', button.getAttribute('data-article'));
+        showToast('Error updating favorites');
+    }
+}
+
+// update favorites count
+function updateFavoritesCount() {
     const favorites = getFavorites();
-    const index = favorites.findIndex(fav => fav.title === article.title);
+    const favCount = document.querySelector('.favorites-count');
     
-    if (index === -1) {
-        // Add to favorites
-        favorites.push(article);
-        showToast('Added to favorites!');
+    if (favCount) {
+        favCount.textContent = favorites.length;
+        favCount.style.display = favorites.length > 0 ? 'inline-flex' : 'none';
+    }
+}
+
+// Update the displayFavorites function
+function displayFavorites() {
+    const favorites = getFavorites();
+    if (favorites.length === 0) {
+        newsContainer.innerHTML = `
+            <div class="error">
+                <p>No favorite articles yet!</p>
+            </div>`;
     } else {
-        // Remove from favorites
-        favorites.splice(index, 1);
-        showToast('Removed from favorites!');
+        displayNews(favorites);
     }
-    
-    localStorage.setItem('favorites', JSON.stringify(favorites));
-    
-    // Update the favorite button state
-    const btn = event.target.closest('.favorite-btn');
-    if (btn) {
-        btn.classList.toggle('active');
-    }
+    updateFavoritesCount();
 }
 
-// Show favorites
-function showFavorites() {
-    const favorites = getFavorites();
-    displayNews(favorites);
-    document.querySelector('.category-title h2').textContent = 'Favorite News';
-}
-
-// Toast notification
+// Function to show toast notifications
 function showToast(message) {
     const toast = document.createElement('div');
     toast.className = 'toast';
@@ -202,3 +324,57 @@ window.addEventListener('resize', () => {
         menuIcon.classList.remove('active');
     }
 });
+
+// Add this to your existing JavaScript
+document.querySelector('.search-bar input').addEventListener('focus', function() {
+    if (window.innerWidth <= 767) {
+        this.closest('.search-bar').classList.add('keyboard-active');
+    }
+});
+
+document.querySelector('.search-bar input').addEventListener('blur', function() {
+    if (window.innerWidth <= 767) {
+        this.closest('.search-bar').classList.remove('keyboard-active');
+    }
+});
+
+// Add these functions to handle mobile menu
+function setupMobileMenu() {
+    const menuToggle = document.querySelector('.menu-toggle');
+    const navLinks = document.querySelector('.nav-links');
+    
+    if (!menuToggle) return;
+
+    // Toggle menu
+    menuToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navLinks.classList.toggle('active');
+        menuToggle.innerHTML = navLinks.classList.contains('active') ? 
+            '<i class="fas fa-times"></i>' : 
+            '<i class="fas fa-bars"></i>';
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!navLinks.contains(e.target) && !menuToggle.contains(e.target)) {
+            navLinks.classList.remove('active');
+            menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+        }
+    });
+
+    // Close menu when clicking a link
+    navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+            navLinks.classList.remove('active');
+            menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+        });
+    });
+
+    // Close menu on resize
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 767) {
+            navLinks.classList.remove('active');
+            menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+        }
+    });
+}

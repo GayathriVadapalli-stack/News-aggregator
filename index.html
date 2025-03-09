@@ -8,42 +8,48 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <nav>
-        <div class="navbar">
-            <div class="main-nav">
-                <img src="./imgs/smart news logo.png" alt="News Logo" class="logo">
-                <div class="menu-icon" onclick="toggleMenu()">
-                    <i class="fas fa-bars"></i>
-                </div>
-                <div class="nav-links">
-                    <ul>
-                        <li><a href="#" class="active" onclick="fetchNews('general')">General</a></li>
-                        <li><a href="#" onclick="fetchNews('business')">Business</a></li>
-                        <li><a href="#" onclick="fetchNews('technology')">Technology</a></li>
-                        <li><a href="#" onclick="fetchNews('sports')">Sports</a></li>
-                        <li><a href="#" onclick="fetchNews('entertainment')">Entertainment</a></li>
-                        <li><a href="#" onclick="showFavorites(); return false;">
-                            <i class="fas fa-heart"></i> Favorites
-                        </a></li>
-                    </ul>
-                </div>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="main-nav">
+            <div class="logo">
+                <img src="./imgs/smart news logo.png" alt="Logo">
             </div>
-            <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="Search news...">
-                <button id="searchBtn">Search</button>
+
+            <button class="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="nav-links">
+                <ul>
+                    <li><a href="#" data-category="general" class="active">Home</a></li>
+                    <li><a href="#" data-category="business">Business</a></li>
+                    <li><a href="#" data-category="technology">Technology</a></li>
+                    <li><a href="#" data-category="sports">Sports</a></li>
+                    <li><a href="#" data-category="entertainment">Entertainment</a></li>
+                    <li>
+                        <a href="#" data-category="favorites" class="favorites-link">
+                            Favorites <span class="favorites-count" style="display: none">0</span>
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
 
-    <main>
-        <div class="category-title">
-            <h2>Top Headlines</h2>
+    <!-- Main Body -->
+    <div class="main-content">
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search news...">
+            <button id="searchBtn">Search</button>
         </div>
+        
         <div class="news-container">
-            <!-- News cards will be inserted here -->
+            <!-- News articles will be rendered here -->
         </div>
-    </main>
+    </div>
 
+    <!-- Footer -->
     <footer>
         <div class="footer-content">
             <div class="footer-section">
@@ -68,6 +74,6 @@
         </div>
     </footer>
 
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>
