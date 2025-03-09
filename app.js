@@ -2,7 +2,6 @@ const newsContainer = document.querySelector('.news-container');
 const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
 
-// Make sure we're using the correct API key from config.js
 import { apiKey } from './config.js';
 
 async function loadConfig() {
@@ -15,13 +14,12 @@ async function loadConfig() {
     try {
         newsContainer.innerHTML = '<div class="loading">Loading news...</div>';
         
-        // Log the URL and API key (remove in production)
+            
         console.log('Fetching news for category:', category);
         
         const url = `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=${apiKey}`;
         const response = await fetch(url);
         
-        // Log response status
         console.log('Response status:', response.status);
         
         if (!response.ok) {
