@@ -2,32 +2,20 @@ const newsContainer = document.querySelector('.news-container');
 const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
 
-import { apiKey } from './config.js';
+const apiKey = 'd2e837634e374027bbdac4f0cc94cc30'; 
 
-async function loadConfig() {
-    const response = await fetch("config.json");
-    const config = await response.json();
-    return config;
-  }
-  
-  async function fetchNews(category = 'general') {
+async function fetchNews(category = 'general') {
     try {
         newsContainer.innerHTML = '<div class="loading">Loading news...</div>';
         
-            
-        console.log('Fetching news for category:', category);
-        
         const url = `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=${apiKey}`;
         const response = await fetch(url);
-        
-        console.log('Response status:', response.status);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('API Response:', data); // Debug log
         
         if (data.status === 'ok' && data.articles) {
             displayNews(data.articles);
@@ -35,7 +23,6 @@ async function loadConfig() {
             throw new Error(data.message || 'Failed to fetch news');
         }
     } catch (error) {
-        console.error('Error details:', error);
         newsContainer.innerHTML = `
             <div class="error">
                 <p>Failed to load news. Please try again later.</p>
@@ -43,8 +30,6 @@ async function loadConfig() {
             </div>`;
     }
 }
-  
-  fetchNews();  
 
 async function searchNews() {
     const searchTerm = searchInput.value.trim();
@@ -68,7 +53,6 @@ async function searchNews() {
             throw new Error('No results found');
         }
     } catch (error) {
-        console.error('Error:', error);
         newsContainer.innerHTML = `
             <div class="error">
                 <p>No results found. Try different keywords.</p>
@@ -105,7 +89,10 @@ function displayNews(articles) {
             publishedAt: article.publishedAt || new Date().toISOString()
         };
         
-        const articleData = JSON.stringify(cleanArticle).replace(/"/g, '&quot;');
+        const articleData = JSON.stringify(cleanArticle)
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+        
         const isFavorite = isInFavorites(cleanArticle);
         
         return `
@@ -148,7 +135,7 @@ function displayNews(articles) {
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Page loaded, fetching news...'); // Debug log
+    console.log('Page loaded, fetching news...');
     fetchNews('general');
     updateFavoritesCount();
     
@@ -186,8 +173,7 @@ function getFavorites() {
     try {
         const favorites = localStorage.getItem('favorites');
         return favorites ? JSON.parse(favorites) : [];
-    } catch (error) {
-        console.error('Error getting favorites:', error);
+    } catch {
         return [];
     }
 }
@@ -197,7 +183,6 @@ function saveFavorites(favorites) {
         localStorage.setItem('favorites', JSON.stringify(favorites));
     } catch (error) {
         console.error('Error saving favorites:', error);
-        showToast('Error saving favorites');
     }
 }
 
@@ -213,7 +198,7 @@ function isInFavorites(article) {
 function handleFavoriteClick(button) {
     try {
         let articleData = button.getAttribute('data-article');
-        articleData = articleData.replace(/&quot;/g, '"');
+        articleData = articleData.replace(/&quot;/g, '"').replace(/&apos;/g, "'");
         const article = JSON.parse(articleData);
         
         const favorites = getFavorites();
@@ -228,8 +213,7 @@ function handleFavoriteClick(button) {
             button.classList.remove('active');
             showToast('Removed from favorites');
             
-            const currentCategory = document.querySelector('.nav-links a.active')?.getAttribute('data-category');
-            if (currentCategory === 'favorites') {
+            if (document.querySelector('.nav-links a[data-category="favorites"].active')) {
                 displayFavorites();
                 return;
             }
