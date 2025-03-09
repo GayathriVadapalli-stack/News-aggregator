@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Aggregator</title>
+    <link rel="stylesheet" href="news.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav>
+        <div class="navbar">
+            <div class="main-nav">
+                <img src="./imgs/smart news logo.png" alt="News Logo" class="logo">
+                <div class="menu-icon" onclick="toggleMenu()">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <div class="nav-links">
+                    <ul>
+                        <li><a href="#" class="active" onclick="fetchNews('general')">General</a></li>
+                        <li><a href="#" onclick="fetchNews('business')">Business</a></li>
+                        <li><a href="#" onclick="fetchNews('technology')">Technology</a></li>
+                        <li><a href="#" onclick="fetchNews('sports')">Sports</a></li>
+                        <li><a href="#" onclick="fetchNews('entertainment')">Entertainment</a></li>
+                        <li><a href="#" onclick="showFavorites(); return false;">
+                            <i class="fas fa-heart"></i> Favorites
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search news...">
+                <button id="searchBtn">Search</button>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <div class="category-title">
+            <h2>Top Headlines</h2>
+        </div>
+        <div class="news-container">
+            <!-- News cards will be inserted here -->
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About Us</h3>
+                <p>Your trusted source for aggregated news from around the world.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Categories</h3>
+                <ul>
+                    <li><a href="#" data-category="general">General</a></li>
+                    <li><a href="#" data-category="business">Business</a></li>
+                    <li><a href="#" data-category="technology">Technology</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p>Email: info@newsaggregator.com</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 News Aggregator. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
