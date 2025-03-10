@@ -215,8 +215,61 @@ function updateFavoritesCount() {
     }
 }
 
+function setupMobileMenu() {
+    const menuToggle = document.querySelector('.menu-toggle');
+    const navLinks = document.querySelector('.nav-links');
+    
+    if (!menuToggle) return;
+
+    menuToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMenu();
+    });
+
+    navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                toggleMenu();
+            }
+        });
+    });
+}
+
+function toggleMenu() {
+    const navLinks = document.querySelector('.nav-links');
+    const menuToggle = document.querySelector('.menu-toggle');
+    const isOpen = navLinks.classList.contains('active');
+    
+    navLinks.classList.toggle('active');
+    menuToggle.innerHTML = isOpen ? 
+        '<i class="fas fa-bars"></i>' : 
+        '<i class="fas fa-times"></i>';
+}
+
+document.addEventListener('click', (e) => {
+    const navLinks = document.querySelector('.nav-links');
+    const menuToggle = document.querySelector('.menu-toggle');
+    
+    if (navLinks.classList.contains('active') && 
+        !navLinks.contains(e.target) && 
+        !menuToggle.contains(e.target)) {
+        navLinks.classList.remove('active');
+        menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+    }
+});
+
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) {
+        const navLinks = document.querySelector('.nav-links');
+        const menuToggle = document.querySelector('.menu-toggle');
+        navLinks.classList.remove('active');
+        menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+    }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     fetchNews('general');
+    setupMobileMenu();
 });
 
 if (searchBtn) {
