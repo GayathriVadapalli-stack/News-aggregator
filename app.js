@@ -1,13 +1,12 @@
 const newsContainer = document.querySelector('.news-container');
 const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
-
-const apiKey = 'd2e837634e374027bbdac4f0cc94cc30'; 
+//API KEY
+const apiKey = 'd2e837634e374027bbdac4f0cc94cc30';
 
 async function fetchNews(category = 'general') {
     try {
         newsContainer.innerHTML = '<div class="loading">Loading news...</div>';
-        
         const url = `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=${apiKey}`;
         const response = await fetch(url);
         
@@ -30,14 +29,13 @@ async function fetchNews(category = 'general') {
             </div>`;
     }
 }
-
+//Search news
 async function searchNews() {
     const searchTerm = searchInput.value.trim();
     if (!searchTerm) return;
 
     try {
         newsContainer.innerHTML = '<div class="loading">Searching news...</div>';
-        
         const url = `https://newsapi.org/v2/everything?q=${searchTerm}&apiKey=${apiKey}&pageSize=20`;
         const response = await fetch(url);
         
@@ -133,68 +131,6 @@ function displayNews(articles) {
     });
 }
 
-// Event Listeners
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Page loaded, fetching news...');
-    fetchNews('general');
-    updateFavoritesCount();
-    
-    document.querySelectorAll('.nav-links a').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
-            link.classList.add('active');
-
-            const category = link.getAttribute('data-category');
-            if (category === 'favorites') {
-                displayFavorites();
-            } else {
-                fetchNews(category);
-            }
-        });
-    });
-
-    setupMobileMenu();
-});
-
-if (searchBtn) {
-    searchBtn.addEventListener('click', searchNews);
-}
-
-if (searchInput) {
-    searchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            searchNews();
-        }
-    });
-}
-
-function getFavorites() {
-    try {
-        const favorites = localStorage.getItem('favorites');
-        return favorites ? JSON.parse(favorites) : [];
-    } catch {
-        return [];
-    }
-}
-
-function saveFavorites(favorites) {
-    try {
-        localStorage.setItem('favorites', JSON.stringify(favorites));
-    } catch (error) {
-        console.error('Error saving favorites:', error);
-    }
-}
-
-function isInFavorites(article) {
-    try {
-        const favorites = getFavorites();
-        return favorites.some(fav => fav.title === article.title);
-    } catch {
-        return false;
-    }
-}
-
 function handleFavoriteClick(button) {
     try {
         let articleData = button.getAttribute('data-article');
@@ -226,23 +162,27 @@ function handleFavoriteClick(button) {
     }
 }
 
-function updateFavoritesCount() {
-    const favorites = getFavorites();
-    const favCount = document.querySelector('.favorites-count');
-    
-    if (favCount) {
-        favCount.textContent = favorites.length;
-        favCount.style.display = favorites.length > 0 ? 'inline-flex' : 'none';
+function getFavorites() {
+    try {
+        return JSON.parse(localStorage.getItem('favorites')) || [];
+    } catch {
+        return [];
     }
+}
+
+function saveFavorites(favorites) {
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+}
+
+function isInFavorites(article) {
+    const favorites = getFavorites();
+    return favorites.some(fav => fav.title === article.title);
 }
 
 function displayFavorites() {
     const favorites = getFavorites();
     if (favorites.length === 0) {
-        newsContainer.innerHTML = `
-            <div class="error">
-                <p>No favorite articles yet!</p>
-            </div>`;
+        newsContainer.innerHTML = '<div class="error">No favorite articles yet! Click the heart icon on news cards to add favorites.</div>';
     } else {
         displayNews(favorites);
     }
@@ -266,81 +206,42 @@ function showToast(message) {
     }, 100);
 }
 
-function toggleMenu() {
-    const navLinks = document.querySelector('.nav-links');
-    const menuIcon = document.querySelector('.menu-icon');
-    
-    navLinks.classList.toggle('active');
-    menuIcon.classList.toggle('active');
+function updateFavoritesCount() {
+    const favorites = getFavorites();
+    const favCount = document.querySelector('.favorites-count');
+    if (favCount) {
+        favCount.textContent = favorites.length;
+        favCount.style.display = favorites.length > 0 ? 'inline-flex' : 'none';
+    }
 }
 
-document.addEventListener('click', (e) => {
-    const navLinks = document.querySelector('.nav-links');
-    const menuIcon = document.querySelector('.menu-icon');
-    
-    if (!navLinks.contains(e.target) && !menuIcon.contains(e.target)) {
-        navLinks.classList.remove('active');
-        menuIcon.classList.remove('active');
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    fetchNews('general');
 });
 
-window.addEventListener('resize', () => {
-    if (window.innerWidth > 768) {
-        const navLinks = document.querySelector('.nav-links');
-        const menuIcon = document.querySelector('.menu-icon');
-        
-        navLinks.classList.remove('active');
-        menuIcon.classList.remove('active');
-    }
-});
+if (searchBtn) {
+    searchBtn.addEventListener('click', searchNews);
+}
 
-document.querySelector('.search-bar input').addEventListener('focus', function() {
-    if (window.innerWidth <= 767) {
-        this.closest('.search-bar').classList.add('keyboard-active');
-    }
-});
-
-document.querySelector('.search-bar input').addEventListener('blur', function() {
-    if (window.innerWidth <= 767) {
-        this.closest('.search-bar').classList.remove('keyboard-active');
-    }
-});
-
-function setupMobileMenu() {
-    const menuToggle = document.querySelector('.menu-toggle');
-    const navLinks = document.querySelector('.nav-links');
-    
-    if (!menuToggle) return;
-
-        
-    menuToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        navLinks.classList.toggle('active');
-        menuToggle.innerHTML = navLinks.classList.contains('active') ? 
-            '<i class="fas fa-times"></i>' : 
-            '<i class="fas fa-bars"></i>';
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!navLinks.contains(e.target) && !menuToggle.contains(e.target)) {
-            navLinks.classList.remove('active');
-            menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
-        }
-    });
-
-    
-    navLinks.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', () => {
-            navLinks.classList.remove('active');
-            menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
-        });
-    });
-
-    // Close menu on resize
-    window.addEventListener('resize', () => {
-        if (window.innerWidth > 767) {
-            navLinks.classList.remove('active');
-            menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+if (searchInput) {
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            searchNews();
         }
     });
 }
+
+document.querySelectorAll('.nav-links a').forEach(link => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+        link.classList.add('active');
+
+        const category = link.getAttribute('data-category');
+        if (category === 'favorites') {
+            displayFavorites();
+        } else {
+            fetchNews(category);
+        }
+    });
+});

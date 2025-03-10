@@ -163,7 +163,7 @@ nav{
 
     .nav-links {
         position: fixed;
-        top: 50px; /* Height of navbar */
+        top: 50px;
         left: -100%;
         width: 100%;
         height: auto;
@@ -200,7 +200,6 @@ nav{
         font-size: 16px;
     }
 
-    /* Adjust main content spacing */
     .main-content {
         margin-top: 50px;
     }
@@ -210,14 +209,13 @@ nav{
     }
 }
 
-/* Main content wrapper */
 .main-content {
     margin-top: 60px;
     padding: 20px;
     width: 100%;
 }
 
-/* Search bar container */
+/* Search bar*/
 .search-bar {
     max-width: 1200px;
     margin: 20px auto;
@@ -228,7 +226,7 @@ nav{
     gap: 12px;
 }
 
-/* Search input styling */
+
 .search-bar input {
     width: 350px;
     height: 40px;
@@ -250,7 +248,6 @@ nav{
     color: #999;
 }
 
-/* Search button styling */
 .search-bar button {
     height: 40px;
     padding: 0 20px;
@@ -342,7 +339,7 @@ footer{
   
   
 
-/* Main container adjustments */
+  /* News container*/
 .news-container {
     max-width: 1200px;
     margin: 20px auto;
@@ -353,7 +350,7 @@ footer{
     justify-items: center;
 }
 
-/* Card styling improvements */
+/* Card */
 .news-card {
     width: 100%;
     max-width: 350px;
@@ -492,7 +489,7 @@ footer{
     }
 }
 
-/* Favorite button styles */
+/* Favorite button */
 .favorite-btn {
     position: absolute;
     top: 10px;
@@ -532,7 +529,7 @@ footer{
     color: #ff4444;
 }
 
-/* Toast notification styles */
+/* Toast notification */
 .toast {
     position: fixed;
     bottom: 20px;
@@ -551,7 +548,7 @@ footer{
     transform: translateX(-50%) translateY(0);
 }
 
-/* Style for empty favorites */
+/*Empty favorites */
 .error {
     text-align: center;
     padding: 20px;
@@ -578,7 +575,6 @@ footer{
     padding: 0 6px;
 }
 
-/* Responsive styles */
 @media (max-width: 768px) {
     .favorites-count {
         min-width: 18px;
@@ -587,14 +583,13 @@ footer{
     }
 }
 
-/* Fix for notched phones */
+
 @supports (padding-top: env(safe-area-inset-top)) {
     .navbar {
         padding-top: calc(5px + env(safe-area-inset-top));
     }
 }
 
-/* Ensure proper spacing when keyboard is active on mobile */
 @media screen and (max-width: 767px) {
     .search-bar.keyboard-active {
         position: sticky;
